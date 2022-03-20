@@ -108,7 +108,7 @@ def translate_text(text):
 
 
 def tweet_text(text, original):
-    text = "{text} #yogitea".format(text=text)
+    translated_text = "{text} #yogitea #itzultzailea".format(text=text)
     original_text = "{text} #yogitea".format(text=original)
 
     with open("credentials.twitter.json") as fp:
@@ -120,9 +120,9 @@ def tweet_text(text, original):
             credentials["ACCESS_TOKEN_KEY"],
             credentials["ACCESS_TOKEN_SECRET"],
         )
-        res = api.request("statuses/update", {"status": text})
+        res = api.request("statuses/update", {"status": translated_text})
         if res.response.ok:
-            print('Tweeted: "{}"'.format(text))
+            print('Tweeted: "{}"'.format(translated_text))
             original_tweet_id = res.response.json().get("id")
             res = api.request(
                 "statuses/update",
