@@ -108,8 +108,8 @@ def translate_text(text):
 
 
 def tweet_text(text, original):
-    translated_text = "{text} #yogitea #itzultzailea".format(text=text)
-    original_text = "{text} #yogitea".format(text=original)
+    translated_text = "{text} #yogitea #yogiteaquotes #itzultzailea".format(text=text)
+    original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
 
     with open("credentials.twitter.json") as fp:
         credentials = json.load(fp)
