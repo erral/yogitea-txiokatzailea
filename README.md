@@ -1,3 +1,6 @@
+# YogiTea mezu-txiokatzailea
+
+
 YogiTea infusio boltsetan datozen testuak euskarara automatikoki itzuli eta txiokatzeko tresna.
 
 Honek funtzionatzeko Twitteren APIa erabiltzen da, beraz Twitterren kontu bat izan behar duzu eta bere kredentzialak `credentials.twitter.json` izeneko fitxategian gordeta izan behar dituzu.
