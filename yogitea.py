@@ -86,7 +86,7 @@ def get_yogitea_text():
         print(err)
 
 
-def translate_text(text):
+def translate_text_itzuli_eus(text):
     payload = {
         "mkey": "8d9016025eb0a44215c7f69c2e10861d",
         "model": "generic_en2eu",
@@ -109,38 +109,83 @@ def translate_text(text):
     return ""
 
 
-def tweet_text(text, original):
-    translated_text = "{text} #yogitea #yogiteaquotes #itzultzailea".format(text=text)
-    original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
+def translate_text_elia_eus(text):
+    session = requests.Session()
+    data = session.get("https://elia.eus")
+    payload = {
+        "source_language": "en",
+        "input_text": text,
+        "translation_engine": "1",
+        "target_language": "eu",
+        "csrfmiddlewaretoken": data.cookies.get("csrftoken"),
+    }
+    session.headers.update(
+        {
+            "Referer": "https://elia.eus/itzultzailea",
+            "Origin": "https://elia.eus",
+            "Accept": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+        }
+    )
+    session.cookies.update({"cookies_accepted": "0"})
+    response = session.post(
+        "https://elia.eus/ajax/translate_string",
+        data=payload,
+    )
 
-    with open("credentials.twitter.json") as fp:
-        credentials = json.load(fp)
+    if response.ok:
+        result = response.json()
+        return result.get("plain_translated_text", "")
 
-        api = TwitterAPI(
-            credentials["API_KEY"],
-            credentials["API_SECRET"],
-            credentials["ACCESS_TOKEN_KEY"],
-            credentials["ACCESS_TOKEN_SECRET"],
-        )
-        res = api.request("statuses/update", {"status": translated_text})
-        if res.response.ok:
-            print('Tweeted: "{}"'.format(translated_text))
-            original_tweet_id = res.response.json().get("id")
-            res = api.request(
-                "statuses/update",
-                {
-                    "status": original_text,
-                    "in_reply_to_status_id": original_tweet_id,
-                },
+    return ""
+
+
+def tweet_text(translations, original):
+    for item in translations:
+        text = item.get("text")
+        source = item.get("source")
+        translated_text = (
+            "{text} #yogitea #yogiteaquotes #itzultzailea #{source}".format(
+                text=text, source=source
             )
+        )
+        original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
+
+        with open("credentials.twitter.json") as fp:
+            credentials = json.load(fp)
+
+            api = TwitterAPI(
+                credentials["API_KEY"],
+                credentials["API_SECRET"],
+                credentials["ACCESS_TOKEN_KEY"],
+                credentials["ACCESS_TOKEN_SECRET"],
+            )
+            res = api.request("statuses/update", {"status": translated_text})
             if res.response.ok:
-                print('Tweeted: "{}"'.format(original_text))
+                print('Tweeted: "{}"'.format(translated_text))
+                original_tweet_id = res.response.json().get("id")
+                res = api.request(
+                    "statuses/update",
+                    {
+                        "status": original_text,
+                        "in_reply_to_status_id": original_tweet_id,
+                    },
+                )
+                if res.response.ok:
+                    print('Tweeted: "{}"'.format(original_text))
 
 
 def main():
     text = get_yogitea_text()
-    translated_text = translate_text(text)
-    tweet_text(translated_text, text)
+    translated_text_itzuli = translate_text_itzuli_eus(text)
+    translated_text_elia = translate_text_elia_eus(text)
+    tweet_text(
+        [
+            {"text": translated_text_itzuli, "source": "itzulieus"},
+            {"text": translated_text_elia, "source": "eliaeus"},
+        ],
+        text,
+    )
 
 
 if __name__ == "__main__":
