@@ -141,38 +141,38 @@ def translate_text_elia_eus(text):
 
 
 def tweet_text(translations, original):
-    for item in translations:
-        text = item.get("text")
-        source = item.get("source")
-        translated_text = (
-            "{text} #yogitea #yogiteaquotes #itzultzailea #{source}".format(
-                text=text, source=source
-            )
+    original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
+
+    with open("credentials.twitter.json") as fp:
+        credentials = json.load(fp)
+
+        api = TwitterAPI(
+            credentials["API_KEY"],
+            credentials["API_SECRET"],
+            credentials["ACCESS_TOKEN_KEY"],
+            credentials["ACCESS_TOKEN_SECRET"],
         )
-        original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
-
-        with open("credentials.twitter.json") as fp:
-            credentials = json.load(fp)
-
-            api = TwitterAPI(
-                credentials["API_KEY"],
-                credentials["API_SECRET"],
-                credentials["ACCESS_TOKEN_KEY"],
-                credentials["ACCESS_TOKEN_SECRET"],
-            )
-            res = api.request("statuses/update", {"status": translated_text})
-            if res.response.ok:
-                print('Tweeted: "{}"'.format(translated_text))
-                original_tweet_id = res.response.json().get("id")
+        res = api.request("statuses/update", {"status": original_text})
+        if res.response.ok:
+            print('Tweeted: "{}"'.format(original_text))
+            previous_tweet_id = res.response.json().get("id")
+            for item in translations:
+                text = item.get("text")
+                source = item.get("source")
+                translated_text = (
+                    "{text} #yogitea #yogiteaquotes #itzultzailea #{source}"
+                    .format(text=text, source=source)
+                )
                 res = api.request(
                     "statuses/update",
                     {
-                        "status": original_text,
-                        "in_reply_to_status_id": original_tweet_id,
+                        "status": translated_text,
+                        "in_reply_to_status_id": previous_tweet_id,
                     },
                 )
                 if res.response.ok:
-                    print('Tweeted: "{}"'.format(original_text))
+                    print('Tweeted: "{}"'.format(translated_text))
+                    previous_tweet_id = res.response.json().get("id")
 
 
 def main():
