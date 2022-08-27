@@ -1,3 +1,4 @@
 # created by virtualenv automatically
 credentials.json
 credentials.twitter.json
+credentials.mastodon.json
