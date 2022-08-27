@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import argparse
 import json
 import os.path
 import random
@@ -19,7 +20,7 @@ SAMPLE_SPREADSHEET_ID = "1GOUUGRmhvmzrPT_Dpw7FHYsfXw70xEK2m37zE2XwuTQ"
 SAMPLE_RANGE_NAME = "YogiTea!A:C"
 
 
-def get_yogitea_text():
+def get_yogitea_text(debug):
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
@@ -68,18 +69,19 @@ def get_yogitea_text():
         value_range_body = {
             "values": [[row[0], row[1], "X"]],
         }
-        # Mark as tweeted
-        request = (
-            service.spreadsheets()
-            .values()
-            .update(
-                spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                range=range_,
-                valueInputOption=value_input_option,
-                body=value_range_body,
+        if not debug:
+            # Mark as tweeted
+            request = (
+                service.spreadsheets()
+                .values()
+                .update(
+                    spreadsheetId=SAMPLE_SPREADSHEET_ID,
+                    range=range_,
+                    valueInputOption=value_input_option,
+                    body=value_range_body,
+                )
             )
-        )
-        response = request.execute()
+            response = request.execute()
         return row[1]
 
     except HttpError as err:
@@ -140,6 +142,10 @@ def translate_text_elia_eus(text):
     return ""
 
 
+def translate_text_batua_eus(text):
+    return ""
+
+
 def tweet_text(translations, original):
     original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
 
@@ -175,18 +181,37 @@ def tweet_text(translations, original):
                     previous_tweet_id = res.response.json().get("id")
 
 
-def main():
-    text = get_yogitea_text()
+def main(debug=True):
+    text = get_yogitea_text(debug)
     translated_text_itzuli = translate_text_itzuli_eus(text)
     translated_text_elia = translate_text_elia_eus(text)
-    tweet_text(
-        [
-            {"text": translated_text_itzuli, "source": "itzulieus"},
-            {"text": translated_text_elia, "source": "eliaeus"},
-        ],
-        text,
-    )
+    translated_text_batua = translate_text_batua_eus(text)
+    if debug:
+        print("Original:           {}".format(text))
+        print("Translation elia:   {}".format(translate_text_elia_eus))
+        print("Translation itzuli: {}".format(translate_text_itzuli_eus))
+        print("Translation batua:  {}".format(translate_text_batua_eus))
+    else:
+        tweet_text(
+            [
+                {"text": translated_text_itzuli, "source": "itzulieus"},
+                {"text": translated_text_elia, "source": "eliaeus"},
+                {"text": translated_text_batua, "source": "batuaeus"},
+            ],
+            text,
+        )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description=(
+            "Get random strings from english to be translated into basque"
+        )
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="do not tweet result, just translate and print",
+    )
+    args = parser.parse_args()
+    main(args.debug)
