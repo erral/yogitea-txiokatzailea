@@ -143,6 +143,25 @@ def translate_text_elia_eus(text):
 
 
 def translate_text_batua_eus(text):
+    payload = {
+        "mkey": "b0d06b50ee07c14",
+        "model": "generic_en2eu",
+        "text": text,
+    }
+    headers = {
+        "Accept": "application/json",
+        "Origin": "https://batua.eus",
+    }
+    response = requests.post(
+        "https://backend.batua.eus/en2eu/translate",
+        json=payload,
+        headers=headers,
+    )
+
+    result = response.json()
+    if result.get("success", None):
+        return result.get("message", "")
+
     return ""
 
 
@@ -188,9 +207,9 @@ def main(debug=True):
     translated_text_batua = translate_text_batua_eus(text)
     if debug:
         print("Original:           {}".format(text))
-        print("Translation elia:   {}".format(translate_text_elia_eus))
-        print("Translation itzuli: {}".format(translate_text_itzuli_eus))
-        print("Translation batua:  {}".format(translate_text_batua_eus))
+        print("Translation elia:   {}".format(translated_text_elia))
+        print("Translation itzuli: {}".format(translated_text_itzuli))
+        print("Translation batua:  {}".format(translated_text_batua))
     else:
         tweet_text(
             [
