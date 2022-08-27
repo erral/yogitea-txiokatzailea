@@ -10,6 +10,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from mastodon import Mastodon
 from TwitterAPI import TwitterAPI
 
 # If modifying these scopes, delete the file token.json.
@@ -200,6 +201,33 @@ def tweet_text(translations, original):
                     previous_tweet_id = res.response.json().get("id")
 
 
+def toot_text(translations, original):
+    original_text = "{text} #yogitea #yogiteaquotes".format(text=original)
+
+    with open("credentials.mastodon.json") as fp:
+        credentials = json.load(fp)
+
+        api = Mastodon(
+            access_token=credentials["ACCESS_TOKEN"],
+            api_base_url="https://mastodon.eus",
+        )
+        result = api.toot(original)
+        print('Tooted: "{}"'.format(original_text))
+        previous_toot_id = result["id"]
+        for item in translations:
+            text = item.get("text")
+            source = item.get("source")
+            translated_text = (
+                "{text} #yogitea #yogiteaquotes #itzultzailea #{source}"
+                .format(text=text, source=source)
+            )
+            result = api.status_post(
+                translated_text, in_reply_to_id=previous_toot_id
+            )
+            previous_toot_id = result["id"]
+            print('Tooted: "{}"'.format(translated_text))
+
+
 def main(debug=True):
     text = get_yogitea_text(debug)
     translated_text_itzuli = translate_text_itzuli_eus(text)
@@ -212,6 +240,14 @@ def main(debug=True):
         print("Translation batua:  {}".format(translated_text_batua))
     else:
         tweet_text(
+            [
+                {"text": translated_text_itzuli, "source": "itzulieus"},
+                {"text": translated_text_elia, "source": "eliaeus"},
+                {"text": translated_text_batua, "source": "batuaeus"},
+            ],
+            text,
+        )
+        toot_text(
             [
                 {"text": translated_text_itzuli, "source": "itzulieus"},
                 {"text": translated_text_elia, "source": "eliaeus"},
